@@ -1,12 +1,6 @@
 package model
 
 import "fmt"
-// Error json
-type Error struct {
-	Code    uint64 `json:"code"`
-	Message string `json:"message"`
-}
-
 
 // NotFoundIDTransactionError to report that requested transaction not found in a particular block
 type NotFoundIDTransactionError struct {
@@ -36,4 +30,13 @@ type InvalidBlockIdentifierError struct {
 
 func (err *InvalidBlockIdentifierError) Error() string {
 	return fmt.Sprintf(" a block identifier: '%s' to request Block from the ether node is invalid", err.Identifier)
+}
+
+// ResponseContentError to report that there is an error in an ethereum node response
+type ResponseContentError struct {
+	Message string
+}
+
+func (err *ResponseContentError) Error() string {
+	return fmt.Sprintf("Ethereum node has returned an error with message: %s", err.Message)
 }

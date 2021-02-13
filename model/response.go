@@ -8,9 +8,16 @@ import (
 
 // RespJSON is the dto to unmarshal json resp
 type RespJSON struct {
-	JSONRPC string `json:"jsonrpc"`
-	Result  *Block `json:"result"`
-	ID      int    `json:"id"`
+	JSONRPC string   `json:"jsonrpc"`
+	Result  *Block   `json:"result"`
+	ID      int      `json:"id"`
+	Error   *EthError `json:"error"`
+}
+
+// EthError json
+type EthError struct {
+	Code    int64 `json:"code"`
+	Message string `json:"message"`
 }
 
 // Block json response

@@ -44,6 +44,12 @@ func (c *jrClient) GetBlockBy(identifier string) (*model.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+	if resp.Error != nil {
+		return nil, &model.ResponseContentError{Message: resp.Error.Message}
+	}
+	if resp.Result == nil {
+		return nil, &model.ResponseContentError{Message: "a resulting block in a response is empty because of unknown reason"}
+	}
 	return resp.Result, nil
 }
 
@@ -84,7 +90,9 @@ func (c *jrClient) GetTransactionByHash(block *model.Block, hash string) (*model
 func (c *jrClient) GetTransactionByIndex(block *model.Block, index uint64) (*model.Transaction, error) {
 	indexHex := fmt.Sprintf("0x%x", index)
 	// Nowhere or nothing to find
-	if block.Transactions == nil || len(block.Transactions) == 0 || int64(len(block.Transactions)) <= int64(index) { // TODO: hell on earth!!! nil pointer?
+	if block == nil || block.Transactions == nil ||
+		len(block.Transactions) == 0 ||
+		int64(len(block.Transactions)) <= int64(index) {
 		return nil, &model.NotFoundIDTransactionError{BlockHash: block.Hash, ID: fmt.Sprintf("0x%d", index)}
 	}
 	for _, t := range block.Transactions {
