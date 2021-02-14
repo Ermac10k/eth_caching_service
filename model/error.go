@@ -23,13 +23,13 @@ func (err *NotFoundHashTransactionError) Error() string {
 	return fmt.Sprintf("the transaction with Hash=%s not found in a requested block (blockHash=%s)", err.Hash, err.BlockHash)
 }
 
-// InvalidBlockIdentifierError to report that a block identifier to request Block from the ether node is invalid 
-type InvalidBlockIdentifierError struct {
+// InvalidIdentifierError to report that a block identifier to request Block from the ether node is invalid 
+type InvalidIdentifierError struct {
 	Identifier string
 }
 
-func (err *InvalidBlockIdentifierError) Error() string {
-	return fmt.Sprintf(" a block identifier: '%s' to request Block from the ether node is invalid", err.Identifier)
+func (err *InvalidIdentifierError) Error() string {
+	return fmt.Sprintf("an identifier: '%s' is invalid", err.Identifier)
 }
 
 // ResponseContentError to report that there is an error in an ethereum node response

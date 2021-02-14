@@ -46,7 +46,7 @@ func sortHashes(txs []*Transaction, blockHash string) []string {
 	tHashes := make([]string, len(txs))
 	pairs := make([]txMetaPair, len(txs))
 	for i, t := range txs {
-		u, err := strconv.ParseUint(t.TransactionIndex, 16, 64)
+		u, err := strconv.ParseUint(t.TransactionIndex[2:], 16, 64)
 		if err != nil {
 			errDecision = err
 			break
