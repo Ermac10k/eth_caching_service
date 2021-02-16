@@ -38,8 +38,6 @@ func serve(handler fasthttp.RequestHandler, req *http.Request) (*http.Response, 
 	return client.Do(req)
 }
 
-var cache = ccache.New(ccache.Configure().Buckets(8).ItemsToPrune(1).MaxSize(12))
-
 var testCasesBlocks = map[string]string{
 	"TestBlockIDOne":      "/block/1",
 	"TestBlockIDLatest":   "/block/latest",
@@ -48,7 +46,7 @@ var testCasesBlocks = map[string]string{
 }
 
 func TestBlockIDOne(t *testing.T) {
-	_, body := commonPart(t)
+	_, body := commonPart(t, testCasesBlocks)
 	b := new(model.ShowcaseBlock)
 	err := json.Unmarshal(body, b)
 	if err != nil {
@@ -61,7 +59,7 @@ func TestBlockIDOne(t *testing.T) {
 }
 
 func TestBlockIDLatest(t *testing.T) {
-	_, body := commonPart(t)
+	_, body := commonPart(t, testCasesBlocks)
 	b := new(model.ShowcaseBlock)
 
 	err := json.Unmarshal(body, b)
@@ -75,7 +73,7 @@ func TestBlockIDLatest(t *testing.T) {
 }
 
 func TestBlockIDNegative(t *testing.T) {
-	resp, body := commonPart(t)
+	resp, body := commonPart(t, testCasesBlocks)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -96,7 +94,7 @@ func TestBlockIDNegative(t *testing.T) {
 }
 
 func TestBlockIDString(t *testing.T) {
-	resp, body := commonPart(t)
+	resp, body := commonPart(t, testCasesBlocks)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -120,27 +118,24 @@ func TestBlockIDString(t *testing.T) {
 }
 
 func TestIncorrectEtherAddress(t *testing.T) {
-	missCli, err := client.NewJRClient("https://cloudflare-eth", cache)
-	if err != nil {
-		t.Error(err)
-	}
-	service := NewRouterToServe("test", "", missCli)
-	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", service.host, service.port, "/block/1"), nil)
-	resp, _ := serve(RegisterHandler(service), req)
-	if resp.StatusCode != fasthttp.StatusInternalServerError {
-		t.Errorf("expected error not raised")
+	cache := ccache.New(ccache.Configure().Buckets(8).ItemsToPrune(1).MaxSize(1))
+	_, err := client.NewJRClient("https://cloudflare-eth.c", cache)
+	if err == nil {
+		t.Error(fmt.Errorf("expected error"))
 	}
 }
 
-func commonPart(t *testing.T) (*http.Response, []byte) {
+func commonPart(t *testing.T, tcs map[string]string) (*http.Response, []byte) {
+	cache := ccache.New(ccache.Configure().Buckets(8).ItemsToPrune(1).MaxSize(1))
 	var c, err = client.NewJRClient("https://cloudflare-eth.com", cache)
 	if err != nil {
 		t.Error(err)
+		return nil, nil
 	}
 	s := NewRouterToServe("test", "", c)
 	r, _ := http.NewRequest(
 		"GET",
-		fmt.Sprintf("http://%s:%s%s", s.host, s.port, testCasesBlocks[t.Name()]),
+		fmt.Sprintf("http://%s:%s%s", s.host, s.port, tcs[t.Name()]),
 		nil,
 	)
 	res, err := serve(RegisterHandler(s), r)
@@ -151,6 +146,7 @@ func commonPart(t *testing.T) (*http.Response, []byte) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		t.Error(err)
+		return nil, nil
 	}
 
 	return res, body

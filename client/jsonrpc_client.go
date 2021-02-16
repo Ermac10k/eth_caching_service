@@ -34,6 +34,7 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 		url:              url,
 		preformattedBody: "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBlockByNumber\",\"params\":[\"%s\", true],\"id\":1}",
 		cache:            cache,
+		lastBlockNumber:  new(big.Int),
 	}
 	b, err := c.GetBlockBy("latest")
 	if err != nil {
@@ -43,7 +44,9 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 	if !ok {
 		return nil, fmt.Errorf("impossible to get latest block number")
 	}
-	c.lastBlockNumber = n
+	c.lock.Lock()
+	c.lastBlockNumber = c.lastBlockNumber.Set(n)
+	c.lock.Unlock()
 	return c, nil
 }
 
@@ -51,15 +54,15 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 // identifier - can be a hex number in string format or the 'latest' tag
 func (c *JRClient) GetBlockBy(identifier string) (*model.Block, error) {
 	if identifier != "latest" {
-		numID := big.NewInt(1)
+		numID := new(big.Int)
 		_, ok := numID.SetString(identifier, 0)
 		if ok {
 
 			c.lock.RLock()
-			ln := c.lastBlockNumber
+			ln := numID.Set(c.lastBlockNumber)
 			c.lock.RUnlock()
 
-			cmp := big.NewInt(0).Sub(ln, numID).Cmp(big.NewInt(20))
+			cmp := new(big.Int).Sub(ln, numID).Cmp(big.NewInt(20))
 			if cmp > 0 {
 				log.Printf("check cache for block with number %s\n", identifier)
 				cached := c.cache.Get(identifier)
@@ -106,11 +109,6 @@ func (c *JRClient) receiveBlockStruct(identifier string) (*model.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf(
-		"received answer for a block with identifier %s:\n%s\n",
-		identifier,
-		respBody,
-	)
 	resp, err := c.bytesToBlockJSON(respBody, identifier)
 	if err != nil {
 		return nil, err
@@ -141,6 +139,11 @@ func (c *JRClient) getBlockBytes(param string) ([]byte, error) {
 		)
 		return nil, err
 	}
+	log.Printf(
+		"received answer for a block with identifier %s, Status code = %d\n",
+		param,
+		resp.StatusCode,
+	)
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf(
