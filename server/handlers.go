@@ -13,7 +13,7 @@ import (
 func (s *RouterToServe) requestBlock(ctx *fasthttp.RequestCtx) {
 	identifier := ctx.UserValue("identifier").(string)
 	if identifier != "latest" { // separates the 'latest' tag from numeric values
-		if err := validateParam(&identifier); err != nil {
+		if err := validateParam(&identifier); err != nil { // changes identifier format to 0x...
 			ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 			return
 		}

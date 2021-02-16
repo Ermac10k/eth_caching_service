@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/karlseguin/ccache/v2"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
 	"my.opera.eth.test/client"
@@ -37,29 +38,17 @@ func serve(handler fasthttp.RequestHandler, req *http.Request) (*http.Response, 
 	return client.Do(req)
 }
 
-var c = client.NewJRClient("https://cloudflare-eth.com")
-var s = NewRouterToServe("test", "", c)
-var testCasesBlocks = map[string]*http.Request{
-	"TestBlockIDOne": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/1"),
-	"TestBlockIDLatest": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/latest"),
-	"TestBlockIDNegative": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/-1"),
-	"TestBlockIDString": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/ff"), // ff is not only a string but a hexadecimal number either. double check.
+var cache = ccache.New(ccache.Configure().Buckets(8).ItemsToPrune(1).MaxSize(12))
+
+var testCasesBlocks = map[string]string{
+	"TestBlockIDOne":      "/block/1",
+	"TestBlockIDLatest":   "/block/latest",
+	"TestBlockIDNegative": "/block/-1",
+	"TestBlockIDString":   "/block/ff", // ff is not only a string but a hexadecimal number either. double check.
 }
 
 func TestBlockIDOne(t *testing.T) {
-	_, body := commonPart(t, testCasesBlocks)
+	_, body := commonPart(t)
 	b := new(model.ShowcaseBlock)
 	err := json.Unmarshal(body, b)
 	if err != nil {
@@ -72,7 +61,7 @@ func TestBlockIDOne(t *testing.T) {
 }
 
 func TestBlockIDLatest(t *testing.T) {
-	_, body := commonPart(t, testCasesBlocks)
+	_, body := commonPart(t)
 	b := new(model.ShowcaseBlock)
 
 	err := json.Unmarshal(body, b)
@@ -86,7 +75,7 @@ func TestBlockIDLatest(t *testing.T) {
 }
 
 func TestBlockIDNegative(t *testing.T) {
-	resp, body := commonPart(t, testCasesBlocks)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -95,9 +84,9 @@ func TestBlockIDNegative(t *testing.T) {
 		)
 	}
 	if string(body) != fmt.Sprintf(
-			"an identifier: '%d' is invalid",
-			-1,
-		) {
+		"an identifier: '%d' is invalid",
+		-1,
+	) {
 		t.Errorf(
 			"Invalid message: %s\nexpectd: %s",
 			string(body),
@@ -107,7 +96,7 @@ func TestBlockIDNegative(t *testing.T) {
 }
 
 func TestBlockIDString(t *testing.T) {
-	resp, body := commonPart(t, testCasesBlocks)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -130,9 +119,30 @@ func TestBlockIDString(t *testing.T) {
 	}
 }
 
-func commonPart(t *testing.T, tcs map[string]*http.Request) (*http.Response, []byte) {
-	r := tcs[t.Name()]
+func TestIncorrectEtherAddress(t *testing.T) {
+	missCli, err := client.NewJRClient("https://cloudflare-eth", cache)
+	if err != nil {
+		t.Error(err)
+	}
+	service := NewRouterToServe("test", "", missCli)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", service.host, service.port, "/block/1"), nil)
+	resp, _ := serve(RegisterHandler(service), req)
+	if resp.StatusCode != fasthttp.StatusInternalServerError {
+		t.Errorf("expected error not raised")
+	}
+}
 
+func commonPart(t *testing.T) (*http.Response, []byte) {
+	var c, err = client.NewJRClient("https://cloudflare-eth.com", cache)
+	if err != nil {
+		t.Error(err)
+	}
+	s := NewRouterToServe("test", "", c)
+	r, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf("http://%s:%s%s", s.host, s.port, testCasesBlocks[t.Name()]),
+		nil,
+	)
 	res, err := serve(RegisterHandler(s), r)
 	if err != nil {
 		t.Error(err)

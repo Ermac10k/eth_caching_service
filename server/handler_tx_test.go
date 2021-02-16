@@ -3,42 +3,23 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/valyala/fasthttp"
 	"my.opera.eth.test/model"
 )
 
-var testCasesTxs = map[string]*http.Request{
-	"TestBlockIDNegativeT": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/-1/txs/1"),
-	"TestBlockIDStringT": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/ff/txs/1"), // ff is not only a string but a hexadecimal number either. double check.
-	"TestTxIDNegative": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/11855219/txs/-1"),
-	"TestTxIDString": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/11855219/txs/ff"), // ff is not only a string but a hexadecimal number either. double check.
-	"TestTxByHash": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/11855219/txs/0x29489800f624b64b975af75bde520c5a70a21848920b5483d463c25c3b22ac0b"),
-	"TestTxById": func(str string) *http.Request {
-		r, _ := http.NewRequest("GET", fmt.Sprintf("http://%s:%s%s", s.host, s.port, str), nil)
-		return r
-	}("/block/11855219/txs/1"),
+var testCasesTxs = map[string]string{
+	"TestBlockIDNegativeT": "/block/-1/txs/1",
+	"TestBlockIDStringT":   "/block/ff/txs/1", // ff is not only a string but a hexadecimal number either. double check.
+	"TestTxIDNegative":     "/block/11855219/txs/-1",
+	"TestTxIDString":       "/block/11855219/txs/ff", // ff is not only a string but a hexadecimal number either. double check.
+	"TestTxByHash":         "/block/11855219/txs/0x29489800f624b64b975af75bde520c5a70a21848920b5483d463c25c3b22ac0b",
+	"TestTxById":           "/block/11855219/txs/1",
 }
 
 func TestTxByHash(t *testing.T) {
-	_, body := commonPart(t, testCasesTxs)
+	_, body := commonPart(t)
 	tx := new(model.Transaction)
 	err := json.Unmarshal(body, tx)
 	if err != nil {
@@ -51,7 +32,7 @@ func TestTxByHash(t *testing.T) {
 }
 
 func TestTxById(t *testing.T) {
-	_, body := commonPart(t, testCasesTxs)
+	_, body := commonPart(t)
 	tx := new(model.Transaction)
 	err := json.Unmarshal(body, tx)
 	if err != nil {
@@ -64,7 +45,7 @@ func TestTxById(t *testing.T) {
 }
 
 func TestBlockIDNegativeT(t *testing.T) {
-	resp, body := commonPart(t, testCasesTxs)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -85,7 +66,7 @@ func TestBlockIDNegativeT(t *testing.T) {
 }
 
 func TestBlockIDStringT(t *testing.T) {
-	resp, body := commonPart(t, testCasesTxs)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -109,7 +90,7 @@ func TestBlockIDStringT(t *testing.T) {
 }
 
 func TestTxIDNegative(t *testing.T) {
-	resp, body := commonPart(t, testCasesTxs)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -130,7 +111,7 @@ func TestTxIDNegative(t *testing.T) {
 }
 
 func TestTxIDString(t *testing.T) {
-	resp, body := commonPart(t, testCasesTxs)
+	resp, body := commonPart(t)
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
