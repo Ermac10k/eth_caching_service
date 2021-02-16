@@ -54,12 +54,10 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 // identifier - can be a hex number in string format or the 'latest' tag
 func (c *JRClient) GetBlockBy(identifier string) (*model.Block, error) {
 	if identifier != "latest" {
-		numID := new(big.Int)
-		_, ok := numID.SetString(identifier, 0)
+		numID, ok := new(big.Int).SetString(identifier, 0)
 		if ok {
-
 			c.lock.RLock()
-			ln := numID.Set(c.lastBlockNumber)
+			ln := new(big.Int).Set(c.lastBlockNumber)
 			c.lock.RUnlock()
 
 			cmp := new(big.Int).Sub(ln, numID).Cmp(big.NewInt(20))
