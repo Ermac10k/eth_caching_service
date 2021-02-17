@@ -11,9 +11,9 @@ import (
 
 // RouterToServe is the service object
 type RouterToServe struct {
-	host            string
-	port            string
-	client          *client.JRClient
+	host   string
+	port   string
+	client *client.JRClient
 }
 
 // NewRouterToServe is the constructor of the RoterToServe obj
