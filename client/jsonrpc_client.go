@@ -34,7 +34,7 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 		url:              url,
 		preformattedBody: "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBlockByNumber\",\"params\":[\"%s\", true],\"id\":1}",
 		cache:            cache,
-		lastBlockNumber:  new(big.Int),
+		lastBlockNumber:  big.NewInt(0),
 	}
 	b, err := c.GetBlockBy("latest")
 	if err != nil {
@@ -44,9 +44,6 @@ func NewJRClient(url string, cache *ccache.Cache) (*JRClient, error) {
 	if !ok {
 		return nil, fmt.Errorf("impossible to get latest block number")
 	}
-	c.lock.Lock()
-	c.lastBlockNumber = c.lastBlockNumber.Set(n)
-	c.lock.Unlock()
 	return c, nil
 }
 

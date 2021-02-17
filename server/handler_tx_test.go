@@ -20,6 +20,9 @@ var testCasesTxs = map[string]string{
 
 func TestTxByHash(t *testing.T) {
 	_, body := commonPart(t, testCasesTxs)
+	if body == nil {
+		return
+	}
 	tx := new(model.Transaction)
 	err := json.Unmarshal(body, tx)
 	if err != nil {
@@ -33,6 +36,9 @@ func TestTxByHash(t *testing.T) {
 
 func TestTxById(t *testing.T) {
 	_, body := commonPart(t, testCasesTxs)
+	if body == nil {
+		return
+	}
 	tx := new(model.Transaction)
 	err := json.Unmarshal(body, tx)
 	if err != nil {
@@ -46,6 +52,9 @@ func TestTxById(t *testing.T) {
 
 func TestBlockIDNegativeT(t *testing.T) {
 	resp, body := commonPart(t, testCasesTxs)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -67,6 +76,9 @@ func TestBlockIDNegativeT(t *testing.T) {
 
 func TestBlockIDStringT(t *testing.T) {
 	resp, body := commonPart(t, testCasesTxs)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
@@ -91,12 +103,16 @@ func TestBlockIDStringT(t *testing.T) {
 
 func TestTxIDNegative(t *testing.T) {
 	resp, body := commonPart(t, testCasesTxs)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
 			resp.StatusCode,
 			fasthttp.StatusBadRequest,
 		)
+		return
 	}
 	if string(body) != fmt.Sprintf(
 		"an identifier: '%d' is invalid",
@@ -112,12 +128,16 @@ func TestTxIDNegative(t *testing.T) {
 
 func TestTxIDString(t *testing.T) {
 	resp, body := commonPart(t, testCasesTxs)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
 			resp.StatusCode,
 			fasthttp.StatusBadRequest,
 		)
+		return
 	}
 	if string(body) != fmt.Sprintf(
 		"an identifier: '%s' is invalid",

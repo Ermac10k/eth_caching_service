@@ -43,14 +43,19 @@ var testCasesBlocks = map[string]string{
 	"TestBlockIDLatest":   "/block/latest",
 	"TestBlockIDNegative": "/block/-1",
 	"TestBlockIDString":   "/block/ff", // ff is not only a string but a hexadecimal number either. double check.
+	"TestBlockCached":     "/block/1",
 }
 
 func TestBlockIDOne(t *testing.T) {
 	_, body := commonPart(t, testCasesBlocks)
+	if body == nil {
+		return
+	}
 	b := new(model.ShowcaseBlock)
 	err := json.Unmarshal(body, b)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if b.Hash == "" {
@@ -60,11 +65,15 @@ func TestBlockIDOne(t *testing.T) {
 
 func TestBlockIDLatest(t *testing.T) {
 	_, body := commonPart(t, testCasesBlocks)
+	if body == nil {
+		return
+	}
 	b := new(model.ShowcaseBlock)
 
 	err := json.Unmarshal(body, b)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 
 	if b.Hash == "" {
@@ -74,12 +83,16 @@ func TestBlockIDLatest(t *testing.T) {
 
 func TestBlockIDNegative(t *testing.T) {
 	resp, body := commonPart(t, testCasesBlocks)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
 			resp.StatusCode,
 			fasthttp.StatusBadRequest,
 		)
+		return
 	}
 	if string(body) != fmt.Sprintf(
 		"an identifier: '%d' is invalid",
@@ -95,12 +108,16 @@ func TestBlockIDNegative(t *testing.T) {
 
 func TestBlockIDString(t *testing.T) {
 	resp, body := commonPart(t, testCasesBlocks)
+	if resp == nil {
+		return
+	}
 	if resp.StatusCode != fasthttp.StatusBadRequest {
 		t.Errorf(
 			"Invalid status code: %d\nexpectd: %d",
 			resp.StatusCode,
 			fasthttp.StatusBadRequest,
 		)
+		return
 	}
 	if string(body) != fmt.Sprintf(
 		"an identifier: '%s' is invalid",
@@ -122,6 +139,35 @@ func TestIncorrectEtherAddress(t *testing.T) {
 	_, err := client.NewJRClient("https://cloudflare-eth.c", cache)
 	if err == nil {
 		t.Error(fmt.Errorf("expected error"))
+	}
+}
+
+func TestBlockCached(t *testing.T) {
+	cache := ccache.New(ccache.Configure().Buckets(8).ItemsToPrune(1).MaxSize(2))
+	cli, err := client.NewJRClient("https://cloudflare-eth.com", cache)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	s := NewRouterToServe("test", "", cli)
+	r, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf("http://%s:%s%s", s.host, s.port, testCasesBlocks[t.Name()]),
+		nil,
+	)
+	_, err = serve(RegisterHandler(s), r)
+	if err != nil {
+		t.Error(err)
+	}
+
+	b := cache.Get("0x1")
+	if b == nil {
+		t.Error("The block with number 0x1 has not been cached")
+		return
+	}
+	num := b.Value().(*model.Block).Number
+	if num != "0x1" {
+		t.Errorf("The block with number %s has been cached\nExpected number: 0x1", num)
 	}
 }
 
