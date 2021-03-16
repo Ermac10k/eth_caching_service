@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/valyala/fasthttp"
-	"my.opera.eth.test/model"
+	"my.eth.test/model"
 )
 
 // GET /block/{identifier}

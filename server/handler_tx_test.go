@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/valyala/fasthttp"
-	"my.opera.eth.test/model"
+	"my.eth.test/model"
 )
 
 var testCasesTxs = map[string]string{

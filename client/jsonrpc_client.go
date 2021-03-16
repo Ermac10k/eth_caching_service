@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/karlseguin/ccache/v2"
-	"my.opera.eth.test/model"
+	"my.eth.test/model"
 )
 
 const contentType = "application/json"

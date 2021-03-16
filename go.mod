@@ -1,4 +1,4 @@
-module my.opera.eth.test
+module my.eth.test
 
 go 1.15
 

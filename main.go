@@ -8,9 +8,9 @@ import (
 
 	"github.com/karlseguin/ccache/v2"
 
-	"my.opera.eth.test/client"
-	"my.opera.eth.test/logger"
-	"my.opera.eth.test/server"
+	"my.eth.test/client"
+	"my.eth.test/logger"
+	"my.eth.test/server"
 )
 
 func main() {

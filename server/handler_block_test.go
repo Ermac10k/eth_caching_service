@@ -12,8 +12,8 @@ import (
 	"github.com/karlseguin/ccache/v2"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
-	"my.opera.eth.test/client"
-	"my.opera.eth.test/model"
+	"my.eth.test/client"
+	"my.eth.test/model"
 )
 
 func serve(handler fasthttp.RequestHandler, req *http.Request) (*http.Response, error) {

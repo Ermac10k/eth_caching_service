@@ -1,11 +1,5 @@
 package model
 
-import (
-	"log"
-	"sort"
-	"strconv"
-)
-
 // RespJSON is the dto to unmarshal json resp
 type RespJSON struct {
 	JSONRPC string    `json:"jsonrpc"`
@@ -28,46 +22,19 @@ type Block struct {
 	Transactions []*Transaction `json:"transactions"`
 }
 
-type txMetaPair struct {
-	Index uint64
-	Hash  string
-}
-
 // ToShowcase is the converter from a whole block to a block with Transactions array
 // that contains transactions' hashes only
 func (b *Block) ToShowcase() *ShowcaseBlock {
 	// sort transactions to ensure by Number. This requirement was introduced in an additional email from Igor
-	txs := sortHashes(b.Transactions, b.Hash)
+	txs := hashes(b.Transactions, b.Hash)
 	return &ShowcaseBlock{NoTransactionBlock: b.NoTransactionBlock, Transactions: txs}
 }
 
-func sortHashes(txs []*Transaction, blockHash string) []string {
-	var errDecision error
+func hashes(txs []*Transaction, blockHash string) []string {
 	tHashes := make([]string, len(txs))
-	pairs := make([]txMetaPair, len(txs))
-	for i, t := range txs {
-		u, err := strconv.ParseUint(t.TransactionIndex[2:], 16, 64)
-		if err != nil {
-			errDecision = err
-			break
-		}
-		pairs[i] = txMetaPair{u, t.Hash}
+	for i, t := range txs{
+		tHashes[i] = t.Hash
 	}
-
-	if errDecision == nil {
-		sort.Slice(pairs, func(i, j int) bool {
-			return pairs[i].Index < pairs[j].Index
-		})
-		for i, p := range pairs {
-			tHashes[i] = p.Hash
-		}
-	} else {
-		log.Printf("the transactions array of block %s is unsortable\nerror:%s\n", blockHash, errDecision.Error())
-		for i, t := range txs {
-			tHashes[i] = t.Hash
-		}
-	}
-
 	return tHashes
 }
 

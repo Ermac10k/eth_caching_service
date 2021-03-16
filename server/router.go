@@ -6,7 +6,7 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 
-	"my.opera.eth.test/client"
+	"my.eth.test/client"
 )
 
 // RouterToServe is the service object
